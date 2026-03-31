@@ -26,4 +26,50 @@ app.post('/posts', async (req, res) =>{
     res.send("Posts añadido")
 })
 
+app.put("/posts/:id", async (req, res) => {
+    const { id } = req.params;
+    const { nombre, email } = req.body;
+    
+    try {
+        const query = {
+            text: "UPDATE posts SET nombre = $1, email = $2 WHERE id = $3 RETURNING *", values: [nombre, email, id],
+        };
+        const result = await pool.query(query);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ mensaje: "Posts no encontrado" });
+        }
+
+        res.json({
+            mensaje: "Posts actualizado",
+            usuario: result.rows[0],
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al actualizar el posts" });
+    }
+});
+
+app.delete("/posts/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(
+            "DELETE FROM posts WHERE id = $1 RETURNING *", [id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                mensaje: "Posts no encontrado"
+            });
+        }
+        res.json({
+            mensaje: "Posts eliminado",
+            usuario: result.rows[0],
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al eliminar el Posts"});
+    }
+});
 
